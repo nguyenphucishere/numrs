@@ -157,6 +157,9 @@ impl<N: Numeric> Index<Range<usize>> for Vector<N>{
     }
 }
 
+
+// vector mul
+
 impl<N: Numeric> Mul for &Vector<N>{
     type Output = Vector<N>;
 
@@ -172,10 +175,102 @@ impl<N: Numeric> Mul for &Vector<N>{
     }
 }
 
+impl<N: Numeric> Mul for Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Self) -> Vector<N>{
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[i] * other[i]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<Vector<N>> for &Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Vector<N>) -> Vector<N>{
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[i] * other[i]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<&Vector<N>> for Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: &Vector<N>) -> Vector<N>{
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[i] * other[i]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+
+// scalar vs vector multiplication
 impl<N: Numeric> Mul<&Scalar<N>> for &Vector<N>{
     type Output = Vector<N>;
 
     fn mul(self, other: &Scalar<N>) -> Vector<N>{
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[i] * other[..]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<&Scalar<N>> for Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: &Scalar<N>) -> Vector<N>{
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[i] * other[..]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<Scalar<N>> for Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Scalar<N>) -> Vector<N>{
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[i] * other[..]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<Scalar<N>> for &Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Scalar<N>) -> Vector<N>{
         let dim = self.data.shape().0;
         let mut result = Vector::<N>::new(dim);
 
@@ -201,6 +296,52 @@ impl<N: Numeric> Mul<&Vector<N>> for &Scalar<N>{
         result
     }
 }
+
+impl<N: Numeric> Mul<Vector<N>> for &Scalar<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Vector<N>) -> Vector<N>{
+        let dim = other.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[..] * other[i]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<Vector<N>> for Scalar<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Vector<N>) -> Vector<N>{
+        let dim = other.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[..] * other[i]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Mul<&Vector<N>> for Scalar<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: &Vector<N>) -> Vector<N>{
+        let dim = other.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = (self[..] * other[i]).ground_if_zero();
+        }
+
+        result
+    }
+}
+
 
 impl<N: Numeric> Mul<N> for &Vector<N>{
     type Output = Vector<N>;
@@ -232,6 +373,9 @@ impl<N: Numeric> Mul<N> for Vector<N>{
     }
 }
 
+
+// vector-matrix multiplication
+
 impl<N: Numeric> Mul<&Matrix<N>> for &Vector<N>{
     type Output = Vector<N>;
 
@@ -243,7 +387,7 @@ impl<N: Numeric> Mul<&Matrix<N>> for &Vector<N>{
         }
 
         Vector{
-            data: other * &self.data
+            data: &self.data * other
         }
     }
 }
@@ -264,6 +408,104 @@ impl<N: Numeric> Mul<&Vector<N>> for &Matrix<N>{
     }
 }
 
+impl<N: Numeric> Mul<Matrix<N>> for Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Matrix<N>) -> Vector<N>{
+        let cols = other.shape().1;
+
+        if cols != self.data.shape().0{
+            panic!("Dimension mismatch for vector-matrix multiplication!");
+        }
+
+        Vector{
+            data: &self.data * other
+        }
+    }
+}
+
+impl<N: Numeric> Mul<Vector<N>> for Matrix<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Vector<N>) -> Vector<N>{
+        let rows = self.shape().0;
+
+        if rows != other.data.shape().0{
+            panic!("Dimension mismatch for matrix-vector multiplication!");
+        }
+
+        Vector{
+            data: self * &other.data
+        }
+    }
+}
+
+impl<N: Numeric> Mul<Matrix<N>> for &Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Matrix<N>) -> Vector<N>{
+        let cols = other.shape().1;
+
+        if cols != self.data.shape().0{
+            panic!("Dimension mismatch for vector-matrix multiplication!");
+        }
+
+        Vector{
+            data: &self.data * other
+        }
+    }
+}
+
+impl<N: Numeric> Mul<Vector<N>> for &Matrix<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: Vector<N>) -> Vector<N>{
+        let rows = self.shape().0;
+
+        if rows != other.data.shape().0{
+            panic!("Dimension mismatch for matrix-vector multiplication!");
+        }
+
+        Vector{
+            data: self * &other.data
+        }
+    }
+}
+
+impl<N: Numeric> Mul<&Matrix<N>> for Vector<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: &Matrix<N>) -> Vector<N>{
+        let cols = other.shape().1;
+
+        if cols != self.data.shape().0{
+            panic!("Dimension mismatch for vector-matrix multiplication!");
+        }
+
+        Vector{
+            data: &self.data * other
+        }
+    }
+}
+
+impl<N: Numeric> Mul<&Vector<N>> for Matrix<N>{
+    type Output = Vector<N>;
+
+    fn mul(self, other: &Vector<N>) -> Vector<N>{
+        let rows = self.shape().0;
+
+        if rows != other.data.shape().0{
+            panic!("Dimension mismatch for matrix-vector multiplication!");
+        }
+
+        Vector{
+            data: self * &other.data
+        }
+    }
+}
+
+
+// vector addition
 impl<N: Numeric> Add for &Vector<N>{
     type Output = Vector<N>;
 
@@ -282,6 +524,64 @@ impl<N: Numeric> Add for &Vector<N>{
         result
     }
 }
+
+impl<N: Numeric> Add for Vector<N>{
+    type Output = Vector<N>;
+
+    fn add(self, other: Vector<N>) -> Vector<N>{
+        if self.data.shape() != other.data.shape(){
+            panic!("Dimension mismatch for vector addition!");
+        }
+
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = self[i] + other[i];
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Add<Vector<N>> for &Vector<N>{
+    type Output = Vector<N>;
+
+    fn add(self, other: Vector<N>) -> Vector<N>{
+        if self.data.shape() != other.data.shape(){
+            panic!("Dimension mismatch for vector addition!");
+        }
+
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = self[i] + other[i];
+        }
+
+        result
+    }
+}
+
+impl<N: Numeric> Add<&Vector<N>> for Vector<N>{
+    type Output = Vector<N>;
+
+    fn add(self, other: &Vector<N>) -> Vector<N>{
+        if self.data.shape() != other.data.shape(){
+            panic!("Dimension mismatch for vector addition!");
+        }
+
+        let dim = self.data.shape().0;
+        let mut result = Vector::<N>::new(dim);
+
+        for i in 0..dim{
+            result[i] = self[i] + other[i];
+        }
+
+        result
+    }
+}
+
 
 impl<N: Numeric> AddAssign<&Vector<N>> for Vector<N>{
     

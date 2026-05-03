@@ -489,6 +489,69 @@ impl<N: Numeric> Add for &Matrix<N>{
     }
 }
 
+impl<N: Numeric> Add for Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn add(self, other: Matrix<N>) -> Matrix<N>{
+        if (self.cols != other.cols) || (self.rows != other.rows){
+            panic!("Matrix must have the same dimension!");
+        }
+
+        let rows = self.rows;
+        let cols = self.cols;
+        let data = self
+            .data.clone()
+            .into_iter()
+            .zip(other.data.into_iter())
+            .map(|(a, b)| a + b)
+            .collect();
+
+        Matrix { data, rows, cols }
+    }
+}
+
+impl<N: Numeric> Add<Matrix<N>> for &Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn add(self, other: Matrix<N>) -> Matrix<N>{
+        if (self.cols != other.cols) || (self.rows != other.rows){
+            panic!("Matrix must have the same dimension!");
+        }
+
+        let rows = self.rows;
+        let cols = self.cols;
+        let data = self
+            .data.clone()
+            .into_iter()
+            .zip(other.data.into_iter())
+            .map(|(a, b)| a + b)
+            .collect();
+
+        Matrix { data, rows, cols }
+    }
+}
+
+impl<N: Numeric> Add<&Matrix<N>> for Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn add(self, other: &Matrix<N>) -> Matrix<N>{
+        if (self.cols != other.cols) || (self.rows != other.rows){
+            panic!("Matrix must have the same dimension!");
+        }
+
+        let rows = self.rows;
+        let cols = self.cols;
+        let data = self
+            .data.clone()
+            .into_iter()
+            .zip(other.data.clone().into_iter())
+            .map(|(a, b)| a + b)
+            .collect();
+
+        Matrix { data, rows, cols }
+    }
+}
+
 impl<N: Numeric> Sub for &Matrix<N>{
     type Output = Matrix<N>;
 
@@ -524,6 +587,48 @@ impl<N: Numeric> Sub for Matrix<N>{
             .data
             .into_iter()
             .zip(other.data.into_iter())
+            .map(|(a, b)| a + N::negative() * b)
+            .collect();
+
+        Matrix { data, rows, cols }
+    }
+}
+
+impl<N: Numeric> Sub<Matrix<N>> for &Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn sub(self, other: Matrix<N>) -> Matrix<N>{
+        if (self.cols != other.cols) || (self.rows != other.rows){
+            panic!("Matrix must have the same dimension!");
+        }
+
+        let rows = self.rows;
+        let cols = self.cols;
+        let data = self
+            .data.clone()
+            .into_iter()
+            .zip(other.data.into_iter())
+            .map(|(a, b)| a + N::negative() * b)
+            .collect();
+
+        Matrix { data, rows, cols }
+    }
+}
+
+impl<N: Numeric> Sub<&Matrix<N>> for Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn sub(self, other: &Matrix<N>) -> Matrix<N>{
+        if (self.cols != other.cols) || (self.rows != other.rows){
+            panic!("Matrix must have the same dimension!");
+        }
+
+        let rows = self.rows;
+        let cols = self.cols;
+        let data = self
+            .data
+            .into_iter()
+            .zip(other.data.clone().into_iter())
             .map(|(a, b)| a + N::negative() * b)
             .collect();
 
@@ -668,6 +773,18 @@ impl<N: Numeric> Mul<&Matrix<N>> for Matrix<N>{
 
 impl<N: Numeric> AddAssign<&Matrix<N>> for Matrix<N>{
     fn add_assign(&mut self, other: &Matrix<N>) {
+        if (self.cols != other.cols) || (self.rows != other.rows){
+            panic!("Matrix must have the same dimension!");
+        }
+
+        for i in 0..self.rows * self.cols{
+            self.data[i] = self.data[i] + other.data[i];
+        }
+    }
+}
+
+impl<N: Numeric> AddAssign<Matrix<N>> for Matrix<N>{
+    fn add_assign(&mut self, other: Matrix<N>) {
         if (self.cols != other.cols) || (self.rows != other.rows){
             panic!("Matrix must have the same dimension!");
         }

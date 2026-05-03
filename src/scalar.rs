@@ -33,6 +33,66 @@ impl<N: Numeric> Mul<&Scalar<N>> for &Matrix<N>{
     }
 }
 
+impl<N: Numeric> Mul<Matrix<N>> for &Scalar<N>{
+    type Output = Matrix<N>;
+
+    fn mul(self, other: Matrix<N>) -> Matrix<N>{
+        let (rows, cols) = other.shape();
+
+        Matrix::<N>::from_arr(&other[..].iter().map(|&x| (x * self.val).ground_if_zero()).collect::<Vec<_>>(), rows, cols)
+    }
+}
+
+impl<N: Numeric> Mul<&Scalar<N>> for Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn mul(self, other: &Scalar<N>) -> Matrix<N>{
+        let (rows, cols) = self.shape();
+
+        Matrix::<N>::from_arr(&self[..].iter().map(|&x| (x * other.val).ground_if_zero()).collect::<Vec<_>>(), rows, cols)
+    }
+}
+
+impl<N: Numeric> Mul<Matrix<N>> for Scalar<N>{
+    type Output = Matrix<N>;
+
+    fn mul(self, other: Matrix<N>) -> Matrix<N>{
+        let (rows, cols) = other.shape();
+
+        Matrix::<N>::from_arr(&other[..].iter().map(|&x| (x * self.val).ground_if_zero()).collect::<Vec<_>>(), rows, cols)
+    }
+}
+
+impl<N: Numeric> Mul<Scalar<N>> for Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn mul(self, other: Scalar<N>) -> Matrix<N>{
+        let (rows, cols) = self.shape();
+
+        Matrix::<N>::from_arr(&self[..].iter().map(|&x| (x * other.val).ground_if_zero()).collect::<Vec<_>>(), rows, cols)
+    }
+}
+
+impl<N: Numeric> Mul<&Matrix<N>> for Scalar<N>{
+    type Output = Matrix<N>;
+
+    fn mul(self, other: &Matrix<N>) -> Matrix<N>{
+        let (rows, cols) = other.shape();
+
+        Matrix::<N>::from_arr(&other[..].iter().map(|&x| (x * self.val).ground_if_zero()).collect::<Vec<_>>(), rows, cols)
+    }
+}
+
+impl<N: Numeric> Mul<Scalar<N>> for &Matrix<N>{
+    type Output = Matrix<N>;
+
+    fn mul(self, other: Scalar<N>) -> Matrix<N>{
+        let (rows, cols) = self.shape();
+
+        Matrix::<N>::from_arr(&self[..].iter().map(|&x| (x * other.val).ground_if_zero()).collect::<Vec<_>>(), rows, cols)
+    }
+}
+
 impl<N: Numeric> Index<RangeFull> for Scalar<N>{
     type Output = N;
     
