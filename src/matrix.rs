@@ -28,17 +28,35 @@ impl<N: Numeric> Matrix<N>{
     }
 
     pub fn from_space(space: &Space<N>, as_col: bool) -> Self{
-        let rows = space.vectors.len();
-        let cols = space.vectors[0][..].len();
+        if as_col{
+            return Matrix::from_columns(&space.vectors);
+        }
+
+        Matrix::from_rows(&space.vectors)
+    }
+
+    pub fn from_rows(rows: &[Vector<N>]) -> Self{
+        let cols = rows[0][..].len();
+        let rows_shape = rows.len();
+        let mut data = vec![N::zero(); rows_shape * cols];
+
+        for i in 0..rows_shape{
+            for j in 0..cols{
+                data[i * rows_shape + j] = rows[i][j];
+            }
+        }
+
+        Matrix { data, rows: rows_shape, cols }
+    }
+
+    pub fn from_columns(columns: &[Vector<N>]) -> Self{
+        let rows = columns[0][..].len();
+        let cols = columns.len();
         let mut data = vec![N::zero(); rows * cols];
 
-        for i in 0..rows{
-            for j in 0..cols{
-                data[j * rows + i] = if as_col{
-                    space.vectors[i][j]
-                }else{
-                    space.vectors[j][i]
-                }
+        for i in 0..cols{
+            for j in 0..rows{
+                data[i * cols + j] = columns[i][j];
             }
         }
 
@@ -342,6 +360,84 @@ impl<N: Numeric> Matrix<N>{
         }
 
         sum
+    }
+
+    pub fn forbenius_norm(&self) -> N{
+        self.forbenius_sq_norm().sqrt()
+    }
+
+    pub fn mean(&self) -> N{
+        let mut sum = N::zero();
+        for i in 0..self.rows * self.cols{
+            sum += self.data[i];
+        }
+
+        N::from_float(sum.to_float() / (self.rows * self.cols) as f64)
+    }
+
+    pub fn center_matrix(&self) -> Self{
+        let mean = self.mean();
+        let mut result = self.clone();
+        for i in 0..result.rows * result.cols{
+            result.data[i] = result.data[i] + N::negative() * mean;
+        }
+
+        result
+    }
+
+    pub fn mean_axis(&self, axis: usize) -> Vector<N>{
+        if axis == 0{
+            let mut mean_vec = vec![N::zero(); self.cols];
+            for i in 0..self.rows{
+                for j in 0..self.cols{
+                    mean_vec[j] += self[i][j];
+                }
+            }
+
+            for j in 0..self.cols{
+                mean_vec[j] = mean_vec[j] / N::from_float(self.rows as f64);
+            }
+
+            Vector::from_arr(&mean_vec)
+        }else if axis == 1{
+            let mut mean_vec = vec![N::zero(); self.rows];
+            for i in 0..self.rows{
+                for j in 0..self.cols{
+                    mean_vec[i] += self[i][j];
+                }
+            }
+
+            for i in 0..self.rows{
+                mean_vec[i] = mean_vec[i] / N::from_float(self.cols as f64);
+            }
+
+            Vector::from_arr(&mean_vec)
+        }else{
+            panic!("Invalid axis for mean calculation");
+        }
+    }
+
+    pub fn center_matrix_axis(&self, axis: usize) -> Self{
+        let mean_vec = self.mean_axis(axis);
+        let mut result = self.clone();
+
+        if axis == 0{
+            for i in 0..result.rows{
+                for j in 0..result.cols{
+                    result[i][j] = result[i][j] + N::negative() * mean_vec[j];
+                }
+            }
+        }else if axis == 1{
+            for i in 0..result.rows{
+                for j in 0..result.cols{
+                    result[i][j] = result[i][j] + N::negative() * mean_vec[i];
+                }
+            }
+        }else{
+            panic!("Invalid axis for centering");
+        }
+
+        result
     }
 
     pub fn gauss_elim(&self) -> Self{
