@@ -46,10 +46,12 @@ pub trait Numeric: Display +
     fn abs(self) -> Self;
     fn sqrt(self) -> Self;
     fn is_zero(self) -> bool;
+    fn is_negative(self) -> bool;
     fn ground_if_zero(self) -> Self;
     fn to_float(self) -> f64;
     fn to_int(self) -> isize;
     fn from_float(num: f64) -> Self;
+    fn sign(self) -> Self;
 }
 macro_rules! impl_numeric {
     ($($t:ty)*) => {
@@ -66,7 +68,7 @@ macro_rules! impl_numeric {
 
                 fn sqrt(self) -> Self{
                     if self < Self::zero() {
-                        panic!("Cannot compute square root of a negative number!");
+                        panic!("Cannot compute square root of a negative number! -- {:?}", self);
                     }
 
                     (self as f64).sqrt() as $t
@@ -74,6 +76,10 @@ macro_rules! impl_numeric {
 
                 fn is_zero(self) -> bool{
                     self.abs() <= Self::eps()
+                }
+
+                fn is_negative(self) -> bool{
+                    self < Self::zero()
                 }
 
                 fn ground_if_zero(self) -> Self{
@@ -94,6 +100,14 @@ macro_rules! impl_numeric {
 
                 fn from_float(num: f64) -> Self{
                     num as Self
+                }
+
+                fn sign(self) -> Self{
+                    if Self::zero() < self {
+                        Self::one()
+                    }else{
+                        Self::negative()
+                    }
                 }
             }
         )*
