@@ -29,34 +29,43 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 
 | Name | Syntax | Purpose |
 | --- | --- | --- |
-| `new` | `Matrix::new(rows, cols) -> Matrix<N>` | Create a zero-filled matrix. |
-| `from_arr` | `Matrix::from_arr(&arr, rows, cols) -> Matrix<N>` | Build a matrix from a slice. |
-| `from_vec` | `Matrix::from_vec(vec, rows, cols) -> Matrix<N>` | Build a matrix from an owned vector. |
-| `from_space` | `Matrix::from_space(&space, as_col) -> Matrix<N>` | Convert a `Space` into a matrix representation. |
-| `random` | `Matrix::random() -> Matrix<N>` | Placeholder for a random matrix constructor; currently `todo!()`. |
-| `diag` | `Matrix::diag(&arr) -> Matrix<N>` | Create a diagonal matrix from values. |
-| `is_diagonal` | `matrix.is_diagonal() -> bool` | Check whether all off-diagonal entries are zero. |
-| `row_space` | `matrix.row_space() -> Space<N>` | Return the row space as a `Space`. |
-| `col_space` | `matrix.col_space() -> Space<N>` | Return the column space as a `Space`. |
-| `identity` | `Matrix::identity(n) -> Matrix<N>` | Create an identity matrix. |
-| `shape` | `matrix.shape() -> (usize, usize)` | Return `(rows, cols)`. |
-| `transpose` | `matrix.transpose() -> Matrix<N>` | Return the transpose. |
+| `new` | `Matrix::new(rows, cols) -> Matrix<N>` | Create a zero matrix with the requested dimensions. |
+| `from_arr` | `Matrix::from_arr(&arr, rows, cols) -> Matrix<N>` | Build a matrix from a flat slice in row-major order. |
+| `from_vec` | `Matrix::from_vec(vec, rows, cols) -> Matrix<N>` | Build a matrix from an owned row-major buffer. |
+| `from_space` | `Matrix::from_space(&space, as_col) -> Matrix<N>` | Convert a `Space` into a matrix with vectors as rows or columns. |
+| `from_rows` | `Matrix::from_rows(&rows) -> Matrix<N>` | Build a matrix from a slice of row vectors. |
+| `from_columns` | `Matrix::from_columns(&columns) -> Matrix<N>` | Build a matrix from a slice of column vectors. |
+| `random` | `Matrix::random() -> Matrix<N>` | Placeholder constructor for a random matrix; currently `todo!()`. |
+| `diag` | `Matrix::diag(&arr) -> Matrix<N>` | Create a diagonal matrix from the supplied values. |
+| `is_diagonal` | `matrix.is_diagonal() -> bool` | Return `true` when every off-diagonal entry is zero. |
+| `row_space` | `matrix.row_space() -> Space<N>` | Return the span of the matrix rows as a `Space`. |
+| `col_space` | `matrix.col_space() -> Space<N>` | Return the span of the matrix columns as a `Space`. |
+| `col` | `matrix.col(index) -> Vector<N>` | Return a matrix column as a vector. |
+| `with_submatrix` | `matrix.with_submatrix(row_start, col_start, &submatrix) -> Matrix<N>` | Return a copy with a submatrix inserted at the given position. |
+| `identity` | `Matrix::identity(n) -> Matrix<N>` | Create an $n \times n$ identity matrix. |
+| `shape` | `matrix.shape() -> (usize, usize)` | Return the matrix dimensions as `(rows, cols)`. |
+| `transpose` | `matrix.transpose() -> Matrix<N>` | Return a transposed copy of the matrix. |
 | `det` | `matrix.det() -> N` | Compute the determinant of a square matrix. |
-| `augment` | `matrix.augment(&other) -> Matrix<N>` | Concatenate two matrices horizontally. |
-| `dim_truncate` | `matrix.dim_truncate(rows, cols) -> ()` | Shrink a matrix in place to the given dimensions. |
-| `inverse` | `matrix.inverse() -> Matrix<N>` | Compute the matrix inverse. |
-| `safe_inverse` | `matrix.safe_inverse() -> Matrix<N>` | Compute the inverse with looser zero handling on diagonal matrices. |
-| `scale` | `matrix.scale(factor) -> Matrix<N>` | Multiply all entries by a scalar and return the matrix. |
-| `print` | `matrix.print() -> ()` | Print the matrix to stdout. |
-| `print_round` | `matrix.print_round(decimals) -> ()` | Print the matrix with rounded formatting. |
-| `trace` | `matrix.trace() -> N` | Compute the trace of a square matrix. |
+| `augment` | `matrix.augment(&other) -> Matrix<N>` | Append another matrix to the right of this one. |
+| `dim_truncate` | `matrix.dim_truncate(rows, cols) -> ()` | Truncate the matrix in place to the requested shape. |
+| `inverse` | `matrix.inverse() -> Matrix<N>` | Compute the matrix inverse using the crate's standard routine. |
+| `safe_inverse` | `matrix.safe_inverse() -> Matrix<N>` | Compute an inverse with relaxed zero handling for diagonal matrices. |
+| `scale` | `matrix.scale(factor) -> Matrix<N>` | Multiply every entry by a scalar factor. |
+| `print` | `matrix.print() -> ()` | Print the matrix in its default formatting. |
+| `print_round` | `matrix.print_round(decimals) -> ()` | Print the matrix with rounded decimal formatting. |
+| `trace` | `matrix.trace() -> N` | Compute the sum of the diagonal entries. |
 | `pow` | `matrix.pow(exp) -> Matrix<N>` | Raise a square matrix to a positive integer power. |
-| `forbenius_sq_norm` | `matrix.forbenius_sq_norm() -> N` | Compute the squared Frobenius norm. |
-| `gauss_elim` | `matrix.gauss_elim() -> Matrix<N>` | Return the row-echelon form produced by Gaussian elimination. |
-| `rank` | `matrix.rank() -> usize` | Compute the matrix rank. |
-| `pseudo_inverse` | `matrix.pseudo_inverse() -> Matrix<N>` | Compute the Moore-Penrose-style pseudo-inverse used by the crate. |
-| `main_diag` | `matrix.main_diag() -> Vec<N>` | Return the main diagonal as a vector. |
-| `reshape` | `matrix.reshape(rows, cols) -> ()` | Change matrix shape in place without changing the underlying data count. |
+| `forbenius_sq_norm` | `matrix.forbenius_sq_norm() -> N` | Compute the squared Frobenius norm of the matrix. |
+| `forbenius_norm` | `matrix.forbenius_norm() -> N` | Compute the Frobenius norm of the matrix. |
+| `mean` | `matrix.mean() -> N` | Compute the average of all matrix entries. |
+| `center_matrix` | `matrix.center_matrix() -> Matrix<N>` | Return a copy with the global mean subtracted from every entry. |
+| `mean_axis` | `matrix.mean_axis(axis) -> Vector<N>` | Compute the mean along the selected axis. |
+| `center_matrix_axis` | `matrix.center_matrix_axis(axis) -> Matrix<N>` | Return a copy centered along the selected axis. |
+| `gauss_elim` | `matrix.gauss_elim() -> Matrix<N>` | Return the row-echelon form from Gaussian elimination. |
+| `rank` | `matrix.rank() -> usize` | Compute the rank from the row-echelon form. |
+| `pseudo_inverse` | `matrix.pseudo_inverse() -> Matrix<N>` | Compute the pseudo-inverse used by the crate. |
+| `main_diag` | `matrix.main_diag() -> Vec<N>` | Return the main diagonal as a `Vec`. |
+| `reshape` | `matrix.reshape(rows, cols) -> ()` | Change the matrix shape in place without changing the element count. |
 
 ## Vector<N>
 
@@ -64,16 +73,18 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 
 | Name | Syntax | Purpose |
 | --- | --- | --- |
-| `new` | `Vector::new(dim) -> Vector<N>` | Create a zero vector of the given dimension. |
-| `clone` | `vector.clone() -> Vector<N>` | Clone the vector. |
-| `is_zero` | `vector.is_zero() -> bool` | Check whether all entries are zero. |
-| `from_arr` | `Vector::from_arr(&arr) -> Vector<N>` | Build a vector from a slice. |
-| `to_arr` | `vector.to_arr() -> Vec<N>` | Convert the vector into a `Vec<N>`. |
-| `print` | `vector.print() -> ()` | Print the vector to stdout. |
+| `new` | `Vector::new(dim) -> Vector<N>` | Create a zero vector with the requested dimension. |
+| `standard_basis` | `Vector::standard_basis(dim, index) -> Vector<N>` | Create a standard basis vector with a 1 at the selected index. |
+| `zero_at` | `Vector::zero_at(dim, zero_index) -> Vector<N>` | Create a vector filled with ones except for a zero at the selected index. |
+| `clone` | `vector.clone() -> Vector<N>` | Return a deep copy of the vector. |
+| `is_zero` | `vector.is_zero() -> bool` | Return `true` when all entries are zero. |
+| `from_arr` | `Vector::from_arr(&arr) -> Vector<N>` | Build a vector from a flat slice. |
+| `to_arr` | `vector.to_arr() -> Vec<N>` | Convert the vector into a flat `Vec`. |
+| `print` | `vector.print() -> ()` | Print the vector in its default formatting. |
 | `sq_norm` | `vector.sq_norm() -> N` | Compute the squared Euclidean norm. |
-| `normalize` | `vector.normalize() -> Vector<N>` | Return a unit-length version of the vector. |
+| `normalize` | `vector.normalize() -> Vector<N>` | Return a unit vector in the same direction. |
 | `dot` | `vector.dot(&other) -> N` | Compute the dot product with another vector. |
-| `dot_vec` | `vector.dot_vec(&vec) -> N` | Compute the dot product with a raw `Vec<N>`. |
+| `dot_vec` | `vector.dot_vec(&vec) -> N` | Compute the dot product with a raw vector buffer. |
 | `cross` | `vector.cross(&other) -> Vector<N>` | Compute the 3D cross product. |
 | `cos_bwt` | `vector.cos_bwt(&other) -> N` | Compute the cosine of the angle between two vectors. |
 | `outer_dot` | `vector.outer_dot(&other) -> Matrix<N>` | Compute the outer product as a matrix. |
@@ -85,7 +96,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 
 | Name | Syntax | Purpose |
 | --- | --- | --- |
-| `new` | `Scalar::new(val) -> Scalar<N>` | Wrap a numeric value. |
+| `new` | `Scalar::new(val) -> Scalar<N>` | Wrap a numeric value for scalar-based operations. |
 
 ## Space<N>
 
@@ -93,11 +104,11 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 
 | Name | Syntax | Purpose |
 | --- | --- | --- |
-| `new` | `Space::new(vectors) -> Space<N>` | Create a space from a vector collection. |
-| `to_matrix` | `space.to_matrix() -> Matrix<N>` | Convert the space into a matrix. |
-| `is_basis` | `space.is_basis() -> bool` | Check whether the vectors form a basis. |
+| `new` | `Space::new(vectors) -> Space<N>` | Create a space from a collection of vectors. |
+| `to_matrix` | `space.to_matrix() -> Matrix<N>` | Convert the stored vectors into a matrix. |
+| `is_basis` | `space.is_basis() -> bool` | Return `true` when the vectors form a basis. |
 | `dim` | `space.dim() -> usize` | Compute the dimension of the span. |
-| `len` | `space.len() -> usize` | Return the number of stored vectors. |
+| `len` | `space.len() -> usize` | Return how many vectors are stored. |
 
 ## Linear Module Functions
 
@@ -105,15 +116,18 @@ These functions are exposed under `numrs::linear`.
 
 | Name | Syntax | Purpose |
 | --- | --- | --- |
-| `gramschmidt` | `linear::gramschmidt::gramschmidt(&space) -> Space<N>` | Orthonormalize a space using the Gram-Schmidt process. |
-| `qr` | `linear::qr::qr(&matrix) -> (Matrix<N> as Q, Matrix<N> as R)` | Compute the QR decomposition. |
-| `eig` | `linear::eig::eig(&matrix, iterations) -> (Matrix<N> as eigenvalues, Matrix<N> as eigenvectors)` | Compute eigenvalue and eigenvector. |
-| `svd` | `linear::svd::svd(&matrix) -> (Matrix<N> as U, Matrix<N> as Sigma, Matrix<N> as V)` | Compute a singular value decomposition. |
+| `gramschmidt` | `linear::gramschmidt::gramschmidt(&space) -> Space<N>` | Orthonormalize a space with the Gram-Schmidt process. |
+| `qr` | `linear::qr::qr(&matrix) -> (Matrix<N> as Q, Matrix<N> as R)` | Compute the QR decomposition of a matrix. |
+| `eig` | `linear::eig::eig(&matrix, iterations) -> (Matrix<N> as eigenvalues, Matrix<N> as eigenvectors)` | Compute approximate eigenvalues and eigenvectors. |
+| `svd` | `linear::svd::svd(&matrix) -> (Matrix<N> as U, Matrix<N> as Sigma, Matrix<N> as V)` | Compute the singular value decomposition. |
+| `householder` | `linear::householder::householder(&vector) -> Matrix<N>` | Build a Householder reflection matrix from a vector. |
+| `pca` | `linear::pca::pca(data, n_components) -> Matrix<N>` | Project centered data onto the top principal components. |
+| `test_svd` | `linear::svd::test_svd(&matrix) -> ()` | Print the intermediate matrices used by the SVD test routine. |
 
 ### Linear module notes
 
 - `linear::gramschmidt::gramschmidt(&space)` returns an orthonormal `Space`.
-- `linear::pca` currently exists as a placeholder module and exposes no public functions yet.
+- `linear::pca::pca(data, n_components)` returns the data projected onto the top principal components.
 
 ## Trait & Operator Summary (by type)
 
