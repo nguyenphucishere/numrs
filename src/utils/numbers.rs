@@ -4,7 +4,6 @@ use std::iter::Sum;
 
 use core::cmp::{PartialEq, PartialOrd};
 
-
 pub trait Identity {
     fn zero() -> Self;
     fn one() -> Self;
@@ -49,9 +48,8 @@ pub trait Numeric: Display +
     fn is_zero(self) -> bool;
     fn ground_if_zero(self) -> Self;
     fn to_float(self) -> f64;
-    fn to_int(self) -> isize{
-        self.to_float() as isize
-    }
+    fn to_int(self) -> isize;
+    fn from_float(num: f64) -> Self;
 }
 macro_rules! impl_numeric {
     ($($t:ty)*) => {
@@ -92,6 +90,10 @@ macro_rules! impl_numeric {
 
                 fn to_int(self) -> isize{
                     self as isize
+                }
+
+                fn from_float(num: f64) -> Self{
+                    num as Self
                 }
             }
         )*
