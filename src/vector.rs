@@ -12,6 +12,27 @@ impl<N: Numeric> Vector<N>{
         Vector { data: Matrix::<N>::new(dim, 1) }
     }
 
+    pub fn standard_basis(dim: usize, index: usize) -> Self{
+        if index >= dim{
+            panic!("Index out of bounds for standard basis vector!");
+        }
+
+        let mut vec = Vector::<N>::new(dim);
+        vec[index] = N::one();
+        vec
+    }
+
+    pub fn zero_at(dim: usize, zero_index: usize) -> Self{
+        if zero_index >= dim{
+            panic!("Index out of bounds for zero vector!");
+        }
+
+        let mut data = vec![N::one(); dim];
+        data[zero_index] = N::zero();
+
+        Vector { data: Matrix::from_arr(&data, dim, 1) }
+    }
+
     pub fn clone(&self) -> Self{
         Vector { data: self.data.clone() }
     }
