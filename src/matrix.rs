@@ -63,6 +63,26 @@ impl<N: Numeric> Matrix<N>{
         Matrix { data, rows, cols }
     }
 
+    pub fn col(&self, index: usize) -> Vector<N>{
+        let mut col_vec = vec![N::zero(); self.rows];
+        for i in 0..self.rows{
+            col_vec[i] = self[i][index];
+        }
+        Vector::from_arr(&col_vec)
+    }
+
+    pub fn with_submatrix(&self, row_start: usize, col_start: usize, submatrix: &Matrix<N>) -> Self{
+        let mut result = self.clone();
+
+        for i in 0..submatrix.rows{
+            for j in 0..submatrix.cols{
+                result[row_start + i][col_start + j] = submatrix[i][j];
+            }
+        }
+
+        result
+    }
+
     pub fn random() -> Self{
         todo!()
     }
