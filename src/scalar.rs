@@ -12,7 +12,6 @@ impl<N: Numeric> Scalar<N>{
     }
 }
 
-
 impl<N: Numeric> Mul<&Matrix<N>> for &Scalar<N>{
     type Output = Matrix<N>;
 
