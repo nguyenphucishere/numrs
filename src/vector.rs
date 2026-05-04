@@ -113,11 +113,11 @@ impl<N: Numeric> Vector<N>{
         let norm_sq = u.sq_norm();
 
         if norm_sq.is_zero(){
-            panic!("Cannot project onto a zero vector!");
+            return Vector::new(self.data.shape().0);
         }
 
         u * (dot_product / norm_sq)
-}
+    }
 
 }
 
