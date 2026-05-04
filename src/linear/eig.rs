@@ -7,7 +7,7 @@ pub fn eig<N: Numeric>(A: &Matrix<N>, iterations: Option<usize>) -> (Matrix<N>, 
     let mut eigenvectors = Matrix::identity(n);
     let mut eigenvalues = A.clone();
 
-    for _ in 0..iterations.unwrap_or(100) {
+    for _ in 0..iterations.unwrap_or(1000) {
         let (Q, R) = qr(&eigenvalues);
         eigenvalues = &R * &Q;
         eigenvectors = &eigenvectors * &Q;

@@ -1,3 +1,5 @@
+#![allow(nonstandard_style)]
+
 pub mod utils;
 pub mod matrix;
 pub mod scalar;

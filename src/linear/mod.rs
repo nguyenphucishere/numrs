@@ -3,3 +3,4 @@ pub mod pca;
 pub mod qr;
 pub mod svd;
 pub mod gramschmidt;
+pub mod householder;
