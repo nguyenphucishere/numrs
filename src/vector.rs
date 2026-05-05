@@ -12,6 +12,18 @@ impl<N: Numeric> Vector<N>{
         Vector { data: Matrix::<N>::new(dim, 1) }
     }
 
+    pub fn from_matrix(matrix: Matrix<N>) -> Self{
+        if matrix.shape().1 != 1{
+            panic!("Input matrix must be a column vector (n x 1)!");
+        }
+
+        Vector { data: matrix }
+    }
+
+    pub fn from_vec(vec: Vec<N>) -> Self{
+        Vector { data: Matrix::from_vec(&vec, vec.len(), 1) }
+    }
+
     pub fn standard_basis(dim: usize, index: usize) -> Self{
         if index >= dim{
             panic!("Index out of bounds for standard basis vector!");
@@ -119,10 +131,14 @@ impl<N: Numeric> Vector<N>{
         }
 
         Matrix::<N>::from_vec(
-            self.data[..].iter().flat_map(|&x| other.data[..].iter().map(move |&y| x * y)).collect(),
+            &self.data[..].iter().flat_map(|&x| other.data[..].iter().map(move |&y| x * y)).collect(),
             self.data.shape().0,
             other.data.shape().0,
         )
+    }
+
+    pub fn transpose(&self) -> Matrix<N>{
+        self.data.transpose()
     }
 
     pub fn proj_to(&self, u: &Self) -> Vector<N>{
@@ -398,18 +414,13 @@ impl<N: Numeric> Mul<N> for Vector<N>{
 // vector-matrix multiplication
 
 impl<N: Numeric> Mul<&Matrix<N>> for &Vector<N>{
-    type Output = Vector<N>;
+    type Output = Matrix<N>;
 
-    fn mul(self, other: &Matrix<N>) -> Vector<N>{
-        let cols = other.shape().1;
-
-        if cols != self.data.shape().0{
+    fn mul(self, other: &Matrix<N>) -> Matrix<N>{
+        if other.shape().0 != self.data.shape().1{
             panic!("Dimension mismatch for vector-matrix multiplication!");
         }
-
-        Vector{
-            data: &self.data * other
-        }
+        Matrix::from(&self.data * other)
     }
 }
 
@@ -417,11 +428,6 @@ impl<N: Numeric> Mul<&Vector<N>> for &Matrix<N>{
     type Output = Vector<N>;
 
     fn mul(self, other: &Vector<N>) -> Vector<N>{
-        let rows = self.shape().0;
-
-        if rows != other.data.shape().0{
-            panic!("Dimension mismatch for matrix-vector multiplication!");
-        }
 
         Vector{
             data: self * &other.data
@@ -430,18 +436,13 @@ impl<N: Numeric> Mul<&Vector<N>> for &Matrix<N>{
 }
 
 impl<N: Numeric> Mul<Matrix<N>> for Vector<N>{
-    type Output = Vector<N>;
+    type Output = Matrix<N>;
 
-    fn mul(self, other: Matrix<N>) -> Vector<N>{
-        let cols = other.shape().1;
-
-        if cols != self.data.shape().0{
+    fn mul(self, other: Matrix<N>) -> Matrix<N>{
+        if other.shape().0 != self.data.shape().1{
             panic!("Dimension mismatch for vector-matrix multiplication!");
         }
-
-        Vector{
-            data: &self.data * other
-        }
+        Matrix::from(self.data * other)
     }
 }
 
@@ -449,11 +450,6 @@ impl<N: Numeric> Mul<Vector<N>> for Matrix<N>{
     type Output = Vector<N>;
 
     fn mul(self, other: Vector<N>) -> Vector<N>{
-        let rows = self.shape().0;
-
-        if rows != other.data.shape().0{
-            panic!("Dimension mismatch for matrix-vector multiplication!");
-        }
 
         Vector{
             data: self * &other.data
@@ -462,18 +458,13 @@ impl<N: Numeric> Mul<Vector<N>> for Matrix<N>{
 }
 
 impl<N: Numeric> Mul<Matrix<N>> for &Vector<N>{
-    type Output = Vector<N>;
+    type Output = Matrix<N>;
 
-    fn mul(self, other: Matrix<N>) -> Vector<N>{
-        let cols = other.shape().1;
-
-        if cols != self.data.shape().0{
+    fn mul(self, other: Matrix<N>) -> Matrix<N>{
+        if other.shape().0 != self.data.shape().1 {
             panic!("Dimension mismatch for vector-matrix multiplication!");
         }
-
-        Vector{
-            data: &self.data * other
-        }
+        Matrix::from(&self.data * other)
     }
 }
 
@@ -481,11 +472,6 @@ impl<N: Numeric> Mul<Vector<N>> for &Matrix<N>{
     type Output = Vector<N>;
 
     fn mul(self, other: Vector<N>) -> Vector<N>{
-        let rows = self.shape().0;
-
-        if rows != other.data.shape().0{
-            panic!("Dimension mismatch for matrix-vector multiplication!");
-        }
 
         Vector{
             data: self * &other.data
@@ -494,18 +480,14 @@ impl<N: Numeric> Mul<Vector<N>> for &Matrix<N>{
 }
 
 impl<N: Numeric> Mul<&Matrix<N>> for Vector<N>{
-    type Output = Vector<N>;
+    type Output = Matrix<N>;
 
-    fn mul(self, other: &Matrix<N>) -> Vector<N>{
-        let cols = other.shape().1;
-
-        if cols != self.data.shape().0{
+    fn mul(self, other: &Matrix<N>) -> Matrix<N>{
+        if other.shape().0 != self.data.shape().1{
             panic!("Dimension mismatch for vector-matrix multiplication!");
         }
 
-        Vector{
-            data: &self.data * other
-        }
+        Matrix::from(self.data * other)
     }
 }
 
@@ -513,11 +495,6 @@ impl<N: Numeric> Mul<&Vector<N>> for Matrix<N>{
     type Output = Vector<N>;
 
     fn mul(self, other: &Vector<N>) -> Vector<N>{
-        let rows = self.shape().0;
-
-        if rows != other.data.shape().0{
-            panic!("Dimension mismatch for matrix-vector multiplication!");
-        }
 
         Vector{
             data: self * &other.data
