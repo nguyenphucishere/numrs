@@ -19,12 +19,34 @@ impl<N: Numeric> Matrix<N>{
         }
     }
 
+    pub fn slice_matrix(&self, row_range: Range<usize>, col_range: Range<usize>) -> Self{
+        let mut data = vec![N::zero(); row_range.len() * col_range.len()];
+
+        for i in row_range.clone(){
+            for j in col_range.clone(){
+                data[(i - row_range.start) * col_range.len() + (j - col_range.start)] = self[i][j];
+            }
+        }
+
+        Matrix { data, rows: row_range.len(), cols: col_range.len() }
+    }
+
+    pub fn cols(&self, range: Range<usize>) -> Matrix<N>{
+        let mut cols = Vec::<Vector<N>>::new();
+
+        for j in range{
+            cols.push(self.col(j));
+        }
+
+        Matrix::from_columns(&cols)
+    }
+
     pub fn from_arr(arr: &[N], rows: usize, cols: usize) -> Self{
         Matrix { data: arr.to_vec(), rows, cols }
     }
 
-    pub fn from_vec(vec: Vec<N>, rows: usize, cols: usize) -> Self{
-        Matrix { data: vec, rows, cols }
+    pub fn from_vec(vec: &Vec<N>, rows: usize, cols: usize) -> Self{
+        Matrix { data: vec.clone(), rows, cols }
     }
 
     pub fn from_space(space: &Space<N>, as_col: bool) -> Self{
