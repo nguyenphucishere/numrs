@@ -115,7 +115,7 @@ pub fn eig<N: Numeric>(A: &Matrix<N>, iterations: Option<usize>) -> (Matrix<N>, 
     
         let mut eigenvectors = Matrix::identity(n);
         let mut eigenvalues = A.clone();
-        for _ in 0..iterations.unwrap_or(1000) {
+        for _ in 0..iterations.unwrap_or(10000) {
             
             let shift = eigenvalues[n-1][n-1];
             let shifted_matrix = &eigenvalues - Matrix::identity(n).scale(shift);
@@ -126,7 +126,7 @@ pub fn eig<N: Numeric>(A: &Matrix<N>, iterations: Option<usize>) -> (Matrix<N>, 
             eigenvectors = &eigenvectors * &Q;
 
             //check for convergence
-            if (0..n-1).all(|i| eigenvalues[i+1][i].abs() < N::eps()) {
+            if (0..n-1).all(|i| eigenvalues[i+1][i].is_zero()) {
                 break;
             }
         }
