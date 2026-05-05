@@ -209,6 +209,20 @@ For numerical routines such as inversion, normalization, and decomposition, floa
 - `Matrix::random()` is currently unimplemented.
 - `linear::pca` is currently empty.
 
+## Development logs
+
+#### 2025-05-05
+```rust
+    A = [
+        [12.0,  5.0,  2.0],
+        [ 8.0,  5.0,  2.0],
+        [10.0,  6.0,  2.0],
+        [10.0,  4.0,  2.0],
+        [10.0,  5.0,  2.0],
+    ]
+```
+This is the test data for PCA, which is just newly implemented. The test works fine, my PCA use traditional SVD-based approach, which is not the most efficient but is straightforward and works well for small datasets. But when I ran SVD on this array, the results were not as expected. The squared value of $Sigma$ should be the eigenvalues of $A^T A$, but they were not -- they are negative (?!). Turns out, the QR alogirthm (used when fiding eigenvalues/eigenvectors for $A^T A$) is not converge for this matrix. The only reason for PCA test to pass but QR algorithm to fail is that the PCA find the eigenvalues of $A^T A$ AFTER CENTERED, but SVD find the eigenvalues of raw $A^T A$. I don't know why the centering step makes the QR algorithm converge, I think if I find the relationship between the eigenvalues of $A^T A$ and the eigenvalues of $(A - mean)^T (A - mean)$, I might be able to find a workaround for this issue. But for now, I have implement the Heissenberg reduction, which is a more stable method for finding eigenvalues/eigenvectors.
+
 ## Development
 
 ```bash
