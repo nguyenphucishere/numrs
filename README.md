@@ -30,8 +30,10 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | Name | Syntax | Purpose |
 | --- | --- | --- |
 | `new` | `Matrix::new(rows, cols) -> Matrix<N>` | Create a zero matrix with the requested dimensions. |
+| `slice_matrix` | `matrix.slice_matrix(row_range, col_range) -> Matrix<N>` | Return a copied submatrix from the selected row and column ranges. |
+| `cols` | `matrix.cols(range) -> Matrix<N>` | Build a matrix from a selected range of columns. |
 | `from_arr` | `Matrix::from_arr(&arr, rows, cols) -> Matrix<N>` | Build a matrix from a flat slice in row-major order. |
-| `from_vec` | `Matrix::from_vec(vec, rows, cols) -> Matrix<N>` | Build a matrix from an owned row-major buffer. |
+| `from_vec` | `Matrix::from_vec(&vec, rows, cols) -> Matrix<N>` | Build a matrix by cloning a flat buffer. |
 | `from_space` | `Matrix::from_space(&space, as_col) -> Matrix<N>` | Convert a `Space` into a matrix with vectors as rows or columns. |
 | `from_rows` | `Matrix::from_rows(&rows) -> Matrix<N>` | Build a matrix from a slice of row vectors. |
 | `from_columns` | `Matrix::from_columns(&columns) -> Matrix<N>` | Build a matrix from a slice of column vectors. |
@@ -54,13 +56,13 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `print` | `matrix.print() -> ()` | Print the matrix in its default formatting. |
 | `print_round` | `matrix.print_round(decimals) -> ()` | Print the matrix with rounded decimal formatting. |
 | `trace` | `matrix.trace() -> N` | Compute the sum of the diagonal entries. |
-| `pow` | `matrix.pow(exp) -> Matrix<N>` | Raise a square matrix to a positive integer power. |
+| `pow` | `matrix.pow(exp) -> Matrix<N>` | Raise a square matrix to an integer power (`exp >= 1`). |
 | `forbenius_sq_norm` | `matrix.forbenius_sq_norm() -> N` | Compute the squared Frobenius norm of the matrix. |
 | `forbenius_norm` | `matrix.forbenius_norm() -> N` | Compute the Frobenius norm of the matrix. |
 | `mean` | `matrix.mean() -> N` | Compute the average of all matrix entries. |
 | `center_matrix` | `matrix.center_matrix() -> Matrix<N>` | Return a copy with the global mean subtracted from every entry. |
-| `mean_axis` | `matrix.mean_axis(axis) -> Vector<N>` | Compute the mean along the selected axis. |
-| `center_matrix_axis` | `matrix.center_matrix_axis(axis) -> Matrix<N>` | Return a copy centered along the selected axis. |
+| `mean_axis` | `matrix.mean_axis(axis) -> Vector<N>` | Compute means by axis (`0`: column means, `1`: row means). |
+| `center_matrix_axis` | `matrix.center_matrix_axis(axis) -> Matrix<N>` | Return a copy centered by axis (`0`: per-column, `1`: per-row). |
 | `gauss_elim` | `matrix.gauss_elim() -> Matrix<N>` | Return the row-echelon form from Gaussian elimination. |
 | `rank` | `matrix.rank() -> usize` | Compute the rank from the row-echelon form. |
 | `pseudo_inverse` | `matrix.pseudo_inverse() -> Matrix<N>` | Compute the pseudo-inverse used by the crate. |
@@ -74,6 +76,8 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | Name | Syntax | Purpose |
 | --- | --- | --- |
 | `new` | `Vector::new(dim) -> Vector<N>` | Create a zero vector with the requested dimension. |
+| `from_matrix` | `Vector::from_matrix(matrix) -> Vector<N>` | Wrap an `n x 1` matrix as a vector. |
+| `from_vec` | `Vector::from_vec(vec) -> Vector<N>` | Build a column vector from an owned buffer. |
 | `standard_basis` | `Vector::standard_basis(dim, index) -> Vector<N>` | Create a standard basis vector with a 1 at the selected index. |
 | `zero_at` | `Vector::zero_at(dim, zero_index) -> Vector<N>` | Create a vector filled with ones except for a zero at the selected index. |
 | `clone` | `vector.clone() -> Vector<N>` | Return a deep copy of the vector. |
@@ -88,6 +92,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `cross` | `vector.cross(&other) -> Vector<N>` | Compute the 3D cross product. |
 | `cos_bwt` | `vector.cos_bwt(&other) -> N` | Compute the cosine of the angle between two vectors. |
 | `outer_dot` | `vector.outer_dot(&other) -> Matrix<N>` | Compute the outer product as a matrix. |
+| `transpose` | `vector.transpose() -> Matrix<N>` | Return the transpose as a `1 x n` matrix. |
 | `proj_to` | `vector.proj_to(&u) -> Vector<N>` | Project the vector onto another vector. |
 
 ## Scalar<N>
@@ -106,7 +111,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | --- | --- | --- |
 | `new` | `Space::new(vectors) -> Space<N>` | Create a space from a collection of vectors. |
 | `to_matrix` | `space.to_matrix() -> Matrix<N>` | Convert the stored vectors into a matrix. |
-| `is_basis` | `space.is_basis() -> bool` | Return `true` when the vectors form a basis. |
+| `is_basis` | `space.is_basis() -> bool` | Return `true` when the vectors form an invertible square matrix. |
 | `dim` | `space.dim() -> usize` | Compute the dimension of the span. |
 | `len` | `space.len() -> usize` | Return how many vectors are stored. |
 
@@ -207,7 +212,7 @@ For numerical routines such as inversion, normalization, and decomposition, floa
 
 - Many methods validate dimensions and will panic on invalid input.
 - `Matrix::random()` is currently unimplemented.
-- `linear::pca` is currently empty.
+- The crate is not optimized for performance and is intended for educational use. For large datasets or production use, consider a more mature library.
 
 ## Development logs
 
@@ -221,7 +226,9 @@ For numerical routines such as inversion, normalization, and decomposition, floa
         [10.0,  5.0,  2.0],
     ]
 ```
-This is the test data for PCA, which is just newly implemented. The test works fine, my PCA use traditional SVD-based approach, which is not the most efficient but is straightforward and works well for small datasets. But when I ran SVD on this array, the results were not as expected. The squared value of $Sigma$ should be the eigenvalues of $A^T A$, but they were not -- they are negative (?!). Turns out, the QR alogirthm (used when fiding eigenvalues/eigenvectors for $A^T A$) is not converge for this matrix. The only reason for PCA test to pass but QR algorithm to fail is that the PCA find the eigenvalues of $A^T A$ AFTER CENTERED, but SVD find the eigenvalues of raw $A^T A$. I don't know why the centering step makes the QR algorithm converge, I think if I find the relationship between the eigenvalues of $A^T A$ and the eigenvalues of $(A - mean)^T (A - mean)$, I might be able to find a workaround for this issue. But for now, I have implement the Heissenberg reduction, which is a more stable method for finding eigenvalues/eigenvectors.
+This is the test data for PCA, which is just newly implemented. The test works fine, my PCA use traditional SVD-based approach, which is not the most efficient but is straightforward and works well for small datasets. But when I ran SVD on this array, the results were not as expected. The squared value of $\Sigma$ should be the eigenvalues of $A^T A$, but they were not - they are negative (?!). 
+Turns out, the QR alogirthm (used when fiding eigenvalues/eigenvectors for $A^T A$) is not converge for this matrix. The only reason for PCA test to pass but QR algorithm to fail is that the PCA find the eigenvalues of $A^T A$ **after centered**, but SVD find the eigenvalues of raw $A^T A$. I try to run QR algorithm with shifts, but the result did not change. I don't know why the centering step makes the QR algorithm converge, I think if I find the relationship between the eigenvalues of $A^T A$ and the eigenvalues of $(A - mean)^T (A - mean)$, I might be able to find a workaround for this issue. 
+But for now, I have implement the Heissenberg reduction, which is a more stable method for finding eigenvalues/eigenvectors.
 
 ## Development
 
