@@ -21,7 +21,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 - `scalar` for scalar wrappers.
 - `space` for spans, bases, and dimension helpers.
 - `linear` for decomposition algorithms.
-- `utils` for numeric traits and shared helpers.
+- `utils` for numeric traits, Gaussian random sampling, and shared helpers.
 
 ## Matrix<N>
 
@@ -37,7 +37,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `from_space` | `Matrix::from_space(&space, as_col) -> Matrix<N>` | Convert a `Space` into a matrix with vectors as rows or columns. |
 | `from_rows` | `Matrix::from_rows(&rows) -> Matrix<N>` | Build a matrix from a slice of row vectors. |
 | `from_columns` | `Matrix::from_columns(&columns) -> Matrix<N>` | Build a matrix from a slice of column vectors. |
-| `random` | `Matrix::random() -> Matrix<N>` | Placeholder constructor for a random matrix; currently `todo!()`. |
+| `random` | `Matrix::random(rows, cols, seed, oversampling) -> Matrix<N>` | Build a Gaussian random matrix, optionally with oversampling columns. |
 | `diag` | `Matrix::diag(&arr) -> Matrix<N>` | Create a diagonal matrix from the supplied values. |
 | `is_diagonal` | `matrix.is_diagonal() -> bool` | Return `true` when every off-diagonal entry is zero. |
 | `row_space` | `matrix.row_space() -> Space<N>` | Return the span of the matrix rows as a `Space`. |
@@ -56,7 +56,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `print` | `matrix.print() -> ()` | Print the matrix in its default formatting. |
 | `print_round` | `matrix.print_round(decimals) -> ()` | Print the matrix with rounded decimal formatting. |
 | `trace` | `matrix.trace() -> N` | Compute the sum of the diagonal entries. |
-| `pow` | `matrix.pow(exp) -> Matrix<N>` | Raise a square matrix to an integer power (`exp >= 1`). |
+| `pow` | `matrix.pow(exp) -> Matrix<N>` | Raise a square matrix to a nonnegative integer power (`exp = 0` returns a copy). |
 | `forbenius_sq_norm` | `matrix.forbenius_sq_norm() -> N` | Compute the squared Frobenius norm of the matrix. |
 | `forbenius_norm` | `matrix.forbenius_norm() -> N` | Compute the Frobenius norm of the matrix. |
 | `mean` | `matrix.mean() -> N` | Compute the average of all matrix entries. |
@@ -86,7 +86,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `to_arr` | `vector.to_arr() -> Vec<N>` | Convert the vector into a flat `Vec`. |
 | `print` | `vector.print() -> ()` | Print the vector in its default formatting. |
 | `sq_norm` | `vector.sq_norm() -> N` | Compute the squared Euclidean norm. |
-| `normalize` | `vector.normalize() -> Vector<N>` | Return a unit vector in the same direction. |
+| `normalize` | `vector.normalize() -> Vector<N>` | Return a unit vector in the same direction, or a zero vector when the norm is zero. |
 | `dot` | `vector.dot(&other) -> N` | Compute the dot product with another vector. |
 | `dot_vec` | `vector.dot_vec(&vec) -> N` | Compute the dot product with a raw vector buffer. |
 | `cross` | `vector.cross(&other) -> Vector<N>` | Compute the 3D cross product. |
@@ -111,7 +111,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | --- | --- | --- |
 | `new` | `Space::new(vectors) -> Space<N>` | Create a space from a collection of vectors. |
 | `to_matrix` | `space.to_matrix() -> Matrix<N>` | Convert the stored vectors into a matrix. |
-| `is_basis` | `space.is_basis() -> bool` | Return `true` when the vectors form an invertible square matrix. |
+| `is_basis` | `space.is_basis() -> bool` | Return `true` when the stored vectors form a linearly independent square set. |
 | `dim` | `space.dim() -> usize` | Compute the dimension of the span. |
 | `len` | `space.len() -> usize` | Return how many vectors are stored. |
 
@@ -127,12 +127,14 @@ These functions are exposed under `numrs::linear`.
 | `svd` | `linear::svd::svd(&matrix) -> (Matrix<N> as U, Matrix<N> as Sigma, Matrix<N> as V)` | Compute the singular value decomposition. |
 | `householder` | `linear::householder::householder(&vector) -> Matrix<N>` | Build a Householder reflection matrix from a vector. |
 | `pca` | `linear::pca::pca(data, n_components) -> Matrix<N>` | Project centered data onto the top principal components. |
+| `randomized_pca` | `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data) -> Matrix<N>` | Compute PCA with a randomized Gaussian projection and optional precomputed random matrix. |
 | `test_svd` | `linear::svd::test_svd(&matrix) -> ()` | Print the intermediate matrices used by the SVD test routine. |
 
 ### Linear module notes
 
 - `linear::gramschmidt::gramschmidt(&space)` returns an orthonormal `Space`.
 - `linear::pca::pca(data, n_components)` returns the data projected onto the top principal components.
+- `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data)` uses a Gaussian random projection before the final PCA step.
 
 ## Trait & Operator Summary (by type)
 
@@ -211,7 +213,8 @@ For numerical routines such as inversion, normalization, and decomposition, floa
 ## Notes
 
 - Many methods validate dimensions and will panic on invalid input.
-- `Matrix::random()` is currently unimplemented.
+- `linear::pca` uses a straightforward SVD-based approach over centered data.
+- `linear::pca::randomized_pca` uses a Gaussian random projection to reduce the data before PCA.
 - The crate is not optimized for performance and is intended for educational use. For large datasets or production use, consider a more mature library.
 
 ## Development logs
