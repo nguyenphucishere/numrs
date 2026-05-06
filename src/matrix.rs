@@ -105,8 +105,20 @@ impl<N: Numeric> Matrix<N>{
         result
     }
 
-    pub fn random() -> Self{
-        todo!()
+    pub fn random(rows: usize, cols: usize, seed: u64, oversampling: Option<usize>) -> Self{
+
+        let mut rng = crate::utils::gauss_random::GaussSeed::seed(seed);
+        let mut data = vec![N::zero(); rows * (cols + oversampling.unwrap_or(0))];
+
+        for i in 0..rows{
+            for j in 0..cols{
+                data[i * cols + j] = N::from_float(rng.next_gaussian());
+            }
+        }
+
+        Matrix { data, rows, 
+            cols: cols + oversampling.unwrap_or(0)
+        }
     }
 
     pub fn diag(arr: &[N]) -> Self{
@@ -840,6 +852,7 @@ impl<N: Numeric> Mul<Matrix<N>> for &Matrix<N>{
         Matrix { data, rows: sr, cols: oc }
     }
 }
+
 
 impl<N: Numeric> Mul for Matrix<N>{
     type Output = Matrix<N>;
