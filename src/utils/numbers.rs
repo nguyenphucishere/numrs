@@ -40,7 +40,7 @@ usign_impl_identity!(u8 u16 u32 u64 u128 usize);
 
 pub trait Numeric: Display + 
     Identity + Copy + Mul<Output = Self> + Add<Output = Self> + PartialOrd + 
-    PartialEq + Div<Output = Self> + AddAssign + MulAssign + DivAssign + Sum<Self>
+    PartialEq + Div<Output = Self> + AddAssign + MulAssign + DivAssign + Sum<Self> + PartialOrd
 {
     fn eps() -> Self;
     fn abs(self) -> Self;
