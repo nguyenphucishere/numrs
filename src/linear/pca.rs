@@ -3,6 +3,7 @@ use crate::matrix::Matrix;
 use crate::vector::Vector;
 use crate::utils::numbers::Numeric;
 use crate::linear::qr::qr;
+use crate::space::Space;
 
 pub fn pca<N: Numeric>(data: Matrix<N>, n_components: usize) -> (Matrix<N>, N) {
 
@@ -111,10 +112,86 @@ pub fn randomized_pca<N: Numeric>(mat_data: &Matrix<N>, n_components: usize, n_o
 
 
 
+/*  From the paper "Finding structure with randomness: 
+        Stochastic algorithms for constructing approximate matrix decompositions" 
+    by Halko, Martinsson, and Tropp (2011)
+*/
 pub fn randomized_pca_threshold<N: Numeric>(mat_data: &Matrix<N>, n_oversamples: usize,
-    energy_threshold: N,
-    random_data: Option<Matrix<N>>,
+    energy_threshold: N
 ) -> (Matrix<N>, N) {
 
-    todo!();
+    let mut Q = Space::empty();
+    let centered_data = mat_data.center_matrix_axis(0);
+    let mut current_error = estimate_intial_error(&centered_data, None);
+    let tolerance = current_error * (N::one() + N::negative() * energy_threshold);
+    
+    while current_error > tolerance {
+        
+        let seed = rand::random();
+        let omega_block = Vector::random(centered_data.shape().1, seed, Some(n_oversamples));
+        
+
+        let y_block = &centered_data * omega_block;
+        
+        Q.append(y_block);
+        Q.orthogonize();
+
+        
+        current_error = estimate_subspace_error(&centered_data, &Q.to_matrix(), None);
+    }
+
+    let B = Q.to_matrix().transpose() * &centered_data;
+    let (_, _, eigenvectors) = svd(&B);
+
+    (centered_data * eigenvectors, current_error)
+}
+
+fn estimate_intial_error<N: Numeric>(mat_data: &Matrix<N>, num_probes: Option<usize>) -> N {
+    // repeat myself for performance.
+    
+    let (_, n) = mat_data.shape();
+    let num_probes = num_probes.unwrap_or(10);
+    let seed = rand::random();
+    let mut max_error = N::from_float(0.0);
+    
+    for _ in 0..num_probes {
+        let omega = Matrix::random(n, 1, seed, None);
+        let current_error_sq = (mat_data * &omega).forbenius_norm();
+
+        if max_error < current_error_sq {
+            max_error = current_error_sq;
+        }
+    }
+
+    max_error.sqrt()
+}
+
+fn estimate_subspace_error<N: Numeric>(mat_data: &Matrix<N>, orth_basis: &Matrix<N>,
+    num_probes: Option<usize>
+) -> N {
+    let (_, n) = mat_data.shape();
+    let num_probes = num_probes.unwrap_or(10);
+    let seed = rand::random();
+    let mut max_error = N::from_float(0.0);
+    
+    for _ in 0..num_probes {
+        let omega = Matrix::random(n, 1, seed, None);
+
+        let mat_x_omega = mat_data * &omega;
+        
+        // captured_vector = orth_basis * (orthbasis.transpose * mat_x_omega)
+        let captured_vector = orth_basis * (orth_basis.transpose() * &mat_x_omega);
+
+        // residual_vector = (A - QQ^T A) * omega = mat_x_omega - QQ^T * omega
+        let residual_vector = &mat_x_omega - &captured_vector;
+        
+        let current_error_sq = residual_vector.forbenius_norm();
+        
+
+        if max_error < current_error_sq {
+            max_error = current_error_sq;
+        }
+    }
+
+    max_error.sqrt()
 }
