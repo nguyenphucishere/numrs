@@ -4,7 +4,7 @@ use crate::vector::Vector;
 use crate::utils::numbers::Numeric;
 use crate::linear::qr::qr;
 
-pub fn pca<N: Numeric>(data: Matrix<N>, n_components: usize) -> Matrix<N> {
+pub fn pca<N: Numeric>(data: Matrix<N>, n_components: usize) -> (Matrix<N>, N) {
 
     let centered_data = data.center_matrix_axis(0);
 
@@ -54,27 +54,32 @@ pub fn pca<N: Numeric>(data: Matrix<N>, n_components: usize) -> Matrix<N> {
         .collect::<Vec<Vector<N>>>()
     );
 
-    // Project the data onto the selected eigenvectors
-    centered_data * selected_eigenvectors
+    let final_mat = &centered_data * &selected_eigenvectors;
+    let approximation_error = (
+        centered_data.forbenius_norm() * centered_data.forbenius_norm() + N::negative() * 
+        final_mat.forbenius_norm() * final_mat.forbenius_norm()
+    ).sqrt();
 
+    // Project the data onto the selected eigenvectors
+    (final_mat, approximation_error)
 }
 
 pub fn randomized_pca<N: Numeric>(mat_data: &Matrix<N>, n_components: usize, n_oversamples: usize,
     random_data: Option<Matrix<N>>
-
 ) -> (Matrix<N>, N) {
 
+    let centered_data = mat_data.center_matrix_axis(0);
     let random_projection = if let Some(data) = random_data {
         data
     } else {
         Matrix::random(mat_data.shape().1, n_components, rand::random(), Some(n_oversamples))
     };
 
-    let projected_data = mat_data * &random_projection;
+    let projected_data = &centered_data * &random_projection;
 
     let (Q, _) = qr(&projected_data);
     
-    let projected_data = Q.transpose() * mat_data;
+    let projected_data = Q.transpose() * &centered_data;
     let (_, eigenvalues, v) = svd(&projected_data);
 
     let eigenvectors = v.transpose();
@@ -89,17 +94,27 @@ pub fn randomized_pca<N: Numeric>(mat_data: &Matrix<N>, n_components: usize, n_o
         .collect::<Vec<Vector<N>>>()
     );
 
-    let final_mat = mat_data * &selected_eigenvectors;
+    let final_mat = &centered_data * &selected_eigenvectors;
 
     // Method 1: reconstruct then calculate the approximation error
     // let approximation_error = 
-    //     (mat_data - &final_mat * selected_eigenvectors.transpose()).forbenius_norm();
+    //     (centered_data - &final_mat * selected_eigenvectors.transpose()).forbenius_norm();
 
     // Method 2: using Pyhtagorean theorem
     let approximation_error = (
-        mat_data.forbenius_norm() * mat_data.forbenius_norm() + N::negative() * 
+        centered_data.forbenius_norm() * centered_data.forbenius_norm() + N::negative() * 
         final_mat.forbenius_norm() * final_mat.forbenius_norm()
     ).sqrt();
 
     (final_mat, approximation_error)
+}
+
+
+
+pub fn randomized_pca_threshold<N: Numeric>(mat_data: &Matrix<N>, n_oversamples: usize,
+    energy_threshold: N,
+    random_data: Option<Matrix<N>>,
+) -> (Matrix<N>, N) {
+
+    todo!();
 }
