@@ -62,9 +62,7 @@ pub fn pca<N: Numeric>(data: Matrix<N>, n_components: usize) -> Matrix<N> {
 pub fn randomized_pca<N: Numeric>(mat_data: &Matrix<N>, n_components: usize, n_oversamples: usize,
     random_data: Option<Matrix<N>>
 
-) -> Matrix<N> {
-
-    // let random_projection = Matrix::random(mat_data.shape().1, n_components, rand::random(), Some(n_oversamples));
+) -> (Matrix<N>, N) {
 
     let random_projection = if let Some(data) = random_data {
         data
@@ -91,5 +89,17 @@ pub fn randomized_pca<N: Numeric>(mat_data: &Matrix<N>, n_components: usize, n_o
         .collect::<Vec<Vector<N>>>()
     );
 
-    mat_data * selected_eigenvectors
+    let final_mat = mat_data * &selected_eigenvectors;
+
+    // Method 1: reconstruct then calculate the approximation error
+    // let approximation_error = 
+    //     (mat_data - &final_mat * selected_eigenvectors.transpose()).forbenius_norm();
+
+    // Method 2: using Pyhtagorean theorem
+    let approximation_error = (
+        mat_data.forbenius_norm() * mat_data.forbenius_norm() + N::negative() * 
+        final_mat.forbenius_norm() * final_mat.forbenius_norm()
+    ).sqrt();
+
+    (final_mat, approximation_error)
 }
