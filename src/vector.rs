@@ -12,6 +12,10 @@ impl<N: Numeric> Vector<N>{
         Vector { data: Matrix::<N>::new(dim, 1) }
     }
 
+    pub fn random(dim: usize, rng_seed: u64, oversampling: Option<usize>) -> Self{
+        Vector { data: Matrix::<N>::random(dim, 1, rng_seed, oversampling) }
+    }
+
     pub fn from_matrix(matrix: Matrix<N>) -> Self{
         if matrix.shape().1 != 1{
             panic!("Input matrix must be a column vector (n x 1)!");
