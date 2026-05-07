@@ -1,4 +1,4 @@
-use rand::{Rng, RngExt, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand::rngs::StdRng;
 
 pub struct GaussSeed{
