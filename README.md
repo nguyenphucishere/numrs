@@ -23,6 +23,15 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 - `linear` for decomposition algorithms.
 - `utils` for numeric traits, Gaussian random sampling, and shared helpers.
 
+## Utils
+
+`utils` contains shared numeric helpers, including the Gaussian random sampler used by matrix and vector random constructors.
+
+| Name | Syntax | Purpose |
+| --- | --- | --- |
+| `seed` | `GaussSeed::seed(seed) -> GaussSeed` | Create a seeded Gaussian sampler. |
+| `next_gaussian` | `gauss_seed.next_gaussian() -> f64` | Generate the next standard Gaussian sample. |
+
 ## Matrix<N>
 
 `Matrix<N>` is the core type in the crate. It stores dense matrix data and supports construction, inspection, transformations, and linear algebra operations.
@@ -37,7 +46,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `from_space` | `Matrix::from_space(&space, as_col) -> Matrix<N>` | Convert a `Space` into a matrix with vectors as rows or columns. |
 | `from_rows` | `Matrix::from_rows(&rows) -> Matrix<N>` | Build a matrix from a slice of row vectors. |
 | `from_columns` | `Matrix::from_columns(&columns) -> Matrix<N>` | Build a matrix from a slice of column vectors. |
-| `random` | `Matrix::random(rows, cols, seed, oversampling) -> Matrix<N>` | Build a Gaussian random matrix, optionally with oversampling columns. |
+| `random` | `Matrix::random(rows, cols, seed, oversampling) -> Matrix<N>` | Build a Gaussian random matrix and optionally append oversampling columns. |
 | `diag` | `Matrix::diag(&arr) -> Matrix<N>` | Create a diagonal matrix from the supplied values. |
 | `is_diagonal` | `matrix.is_diagonal() -> bool` | Return `true` when every off-diagonal entry is zero. |
 | `row_space` | `matrix.row_space() -> Space<N>` | Return the span of the matrix rows as a `Space`. |
@@ -76,6 +85,7 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | Name | Syntax | Purpose |
 | --- | --- | --- |
 | `new` | `Vector::new(dim) -> Vector<N>` | Create a zero vector with the requested dimension. |
+| `random` | `Vector::random(dim, rng_seed, oversampling) -> Vector<N>` | Build a Gaussian random vector wrapper and optionally append oversampling columns. |
 | `from_matrix` | `Vector::from_matrix(matrix) -> Vector<N>` | Wrap an `n x 1` matrix as a vector. |
 | `from_vec` | `Vector::from_vec(vec) -> Vector<N>` | Build a column vector from an owned buffer. |
 | `standard_basis` | `Vector::standard_basis(dim, index) -> Vector<N>` | Create a standard basis vector with a 1 at the selected index. |
@@ -113,6 +123,9 @@ This assumes you have the `numrs` crate in a local directory. Adjust the path as
 | `to_matrix` | `space.to_matrix() -> Matrix<N>` | Convert the stored vectors into a matrix. |
 | `is_basis` | `space.is_basis() -> bool` | Return `true` when the stored vectors form a linearly independent square set. |
 | `dim` | `space.dim() -> usize` | Compute the dimension of the span. |
+| `empty` | `Space::empty() -> Space<N>` | Create an empty space. |
+| `append` | `space.append(vector) -> ()` | Append a vector to the stored set. |
+| `orthogonize` | `space.orthogonize() -> ()` | Replace the stored vectors with their Gram-Schmidt orthogonalization. |
 | `len` | `space.len() -> usize` | Return how many vectors are stored. |
 
 ## Linear Module Functions
@@ -126,15 +139,17 @@ These functions are exposed under `numrs::linear`.
 | `eig` | `linear::eig::eig(&matrix, iterations) -> (Matrix<N> as eigenvalues, Matrix<N> as eigenvectors)` | Compute approximate eigenvalues and eigenvectors. |
 | `svd` | `linear::svd::svd(&matrix) -> (Matrix<N> as U, Matrix<N> as Sigma, Matrix<N> as V)` | Compute the singular value decomposition. |
 | `householder` | `linear::householder::householder(&vector) -> Matrix<N>` | Build a Householder reflection matrix from a vector. |
-| `pca` | `linear::pca::pca(data, n_components) -> Matrix<N>` | Project centered data onto the top principal components. |
-| `randomized_pca` | `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data) -> Matrix<N>` | Compute PCA with a randomized Gaussian projection and optional precomputed random matrix. |
+| `pca` | `linear::pca::pca(data, n_components) -> (Matrix<N>, N)` | Project centered data onto the top principal components and return the approximation error. |
+| `randomized_pca` | `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data) -> (Matrix<N>, N)` | Compute PCA with a randomized Gaussian projection and return the approximation error. |
+| `randomized_pca_threshold` | `linear::pca::randomized_pca_threshold(&matrix, n_oversamples, energy_threshold) -> (Matrix<N>, N)` | Repeatedly grow a randomized PCA subspace until the residual error reaches the requested threshold. |
 | `test_svd` | `linear::svd::test_svd(&matrix) -> ()` | Print the intermediate matrices used by the SVD test routine. |
 
 ### Linear module notes
 
 - `linear::gramschmidt::gramschmidt(&space)` returns an orthonormal `Space`.
-- `linear::pca::pca(data, n_components)` returns the data projected onto the top principal components.
-- `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data)` uses a Gaussian random projection before the final PCA step.
+- `linear::pca::pca(data, n_components)` returns the projected data and its approximation error.
+- `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data)` uses a Gaussian random projection before the final PCA step and returns the approximation error.
+- `linear::pca::randomized_pca_threshold(&matrix, n_oversamples, energy_threshold)` grows the randomized basis until the residual error target is met.
 
 ## Trait & Operator Summary (by type)
 
@@ -214,7 +229,7 @@ For numerical routines such as inversion, normalization, and decomposition, floa
 
 - Many methods validate dimensions and will panic on invalid input.
 - `linear::pca` uses a straightforward SVD-based approach over centered data.
-- `linear::pca::randomized_pca` uses a Gaussian random projection to reduce the data before PCA.
+- `linear::pca::randomized_pca` and `linear::pca::randomized_pca_threshold` use Gaussian random projections before the PCA step.
 - The crate is not optimized for performance and is intended for educational use. For large datasets or production use, consider a more mature library.
 
 ## Development logs
