@@ -6,3 +6,4 @@ pub mod scalar;
 pub mod vector;
 pub mod space;
 pub mod linear;
+pub mod mapping;
