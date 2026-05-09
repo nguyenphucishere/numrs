@@ -7,3 +7,4 @@ pub mod vector;
 pub mod space;
 pub mod linear;
 pub mod mapping;
+pub mod complex;
