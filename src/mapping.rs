@@ -21,6 +21,10 @@ impl<N: Numeric, F: Fn(Matrix<N>) -> Matrix<N>> LinearMapping<N, F> {
 
     pub fn kernel(&self) -> Vec<Matrix<N>> {
         
+        // find x such that map(x) = 0
+        let transforming_matrix = self.map_to(Matrix::identity(self.domain().len()));
+        
+        // transforming_matrix * x = 0
         todo!()
     }
 
