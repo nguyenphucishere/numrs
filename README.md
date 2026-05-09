@@ -151,6 +151,54 @@ These functions are exposed under `numrs::linear`.
 - `linear::pca::randomized_pca(&matrix, n_components, n_oversamples, random_data)` uses a Gaussian random projection before the final PCA step and returns the approximation error.
 - `linear::pca::randomized_pca_threshold(&matrix, n_oversamples, energy_threshold)` grows the randomized basis until the residual error target is met.
 
+## Mapping
+
+`mapping` provides a simple `LinearMapping` wrapper around an arbitrary linear map expressed as a Rust closure. Many helper methods are currently placeholders and may panic or return empty collections until implemented.
+
+| Name | Syntax | Purpose |
+| --- | --- | --- |
+| `new` | `LinearMapping::new(map: F) -> LinearMapping<N, F>` | Create a mapping from a closure `F: Fn(Matrix<N>) -> Matrix<N>`. |
+| `map_to` | `mapping.map_to(input: Matrix<N>) -> Matrix<N>` | Apply the linear map to an input matrix. |
+| `kernel` | `mapping.kernel() -> Vec<Matrix<N>>` | Compute the kernel (null space); currently a placeholder. |
+| `image` | `mapping.image() -> Vec<Matrix<N>>` | Compute the image (range); currently a placeholder. |
+| `is_injective` | `mapping.is_injective() -> bool` | Return `true` when the kernel is empty. |
+| `is_surjective` | `mapping.is_surjective() -> bool` | Return `true` when the image spans the codomain (placeholder heuristic). |
+| `is_bijective` | `mapping.is_bijective() -> bool` | True when injective and surjective. |
+| `compose` | `mapping.compose(other) -> LinearMapping` | Compose two linear mappings into a new mapping. |
+| `domain` | `mapping.domain() -> Vec<Matrix<N>>` | Return domain basis (placeholder). |
+| `codomain` | `mapping.codomain() -> Vec<Matrix<N>>` | Return codomain basis (placeholder). |
+| `rank` | `mapping.rank() -> usize` | Return the rank (size of image). |
+| `nullity` | `mapping.nullity() -> usize` | Return the nullity (size of kernel). |
+| `rank_nullity_theorem` | `mapping.rank_nullity_theorem() -> bool` | Check rank + nullity == domain dimension (depends on placeholders). |
+| `is_isomorphism` | `mapping.is_isomorphism() -> bool` | Alias for `is_bijective`. |
+| `is_endomorphism` | `mapping.is_endomorphism() -> bool` | Check if domain and codomain are equal (placeholder). |
+| `is_automorphism` | `mapping.is_automorphism() -> bool` | True when mapping is an isomorphism and endomorphism. |
+
+## Complex<N>
+
+`Complex<N>` is a lightweight complex-number type generic over `Numeric`. It provides constructors, basic algebra, common complex functions, and numeric transforms.
+
+| Name | Syntax | Purpose |
+| --- | --- | --- |
+| `new` | `Complex::new(re: N, im: N) -> Complex<N>` | Create a complex number from real and imaginary parts. |
+| `Re` / `Im` | `z.Re() -> N`, `z.Im() -> N` | Access real and imaginary parts. |
+| `Conj` | `z.Conj() -> Complex<N>` | Complex conjugate. |
+| `sq_norm` | `z.sq_norm() -> N` | Squared magnitude (re^2 + im^2). |
+| `norm` | `z.norm() -> N` | Magnitude (sqrt of squared norm). |
+| `arg` | `z.arg() -> N` | Argument (angle) in radians. |
+| `pow` | `z.pow(n: usize) -> Complex<N>` | Raise to integer power using polar form. |
+| `exp` | `z.exp() -> Complex<N>` | Complex exponential. |
+| `ln` | `z.ln() -> Complex<N>` | Principal complex logarithm. |
+| `sin` / `cos` / `tan` | `z.sin()`, `z.cos()`, `z.tan()` | Complex trigonometric functions. |
+| `from_polar` | `Complex::from_polar(r: N, theta: N) -> Complex<N>` | Construct from polar coordinates. |
+| `to_polar` | `z.to_polar() -> (N, N)` | Return `(r, theta)` polar pair. |
+| `Add/Sub/Mul/Div` | `z1 + z2`, `z1 - z2`, `z1 * z2`, `z1 / z2` | Standard complex arithmetic (implemented via trait impls). |
+
+### Notes
+
+- Many `mapping` helpers are placeholders (`todo!()`); use `map_to` and `compose` safely, but treat kernel/image/domain/codomain results as incomplete until implemented.
+- `Complex` operations use `Numeric` conversions and floating helpers; prefer floating `Numeric` types for functions that use trigonometric or transcendental helpers.
+
 ## Trait & Operator Summary (by type)
 
 **__IMPORTANT NOTE:__**
