@@ -112,6 +112,36 @@ pub fn randomized_pca<N: Numeric>(mat_data: &Matrix<N>, n_components: usize, n_o
 
 
 
+pub fn randomized_pca_threshold_overshoot<N: Numeric>(mat_data: &Matrix<N>, n_oversamples: usize,
+    energy_threshold: N) -> (Matrix<N>, N) {
+
+    let mut Q = Space::empty();
+    let centered_data = mat_data.center_matrix_axis(0);
+    let mut current_error = estimate_intial_error(&centered_data, None);
+    let tolerance = current_error * (N::one() + N::negative() * energy_threshold);
+    let mut batch = 50;
+    while current_error > tolerance {
+        
+        let seed = rand::random();
+        let omega_block = Vector::random(centered_data.shape().1, seed, Some(batch + n_oversamples));
+        
+
+        let y_block = &centered_data * omega_block;
+        
+        Q.append(y_block);
+        Q.orthogonize();
+
+        
+        current_error = estimate_subspace_error(&centered_data, &Q.to_matrix(), None);
+        batch *= 2;
+    }
+
+    let B = Q.to_matrix().transpose() * &centered_data;
+    let (_, _, eigenvectors) = svd(&B);
+
+    (centered_data * eigenvectors, current_error)
+}
+
 /*  From the paper "Finding structure with randomness: 
         Stochastic algorithms for constructing approximate matrix decompositions" 
     by Halko, Martinsson, and Tropp (2011)
